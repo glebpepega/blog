@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pepega Blog Website</title>
+	<meta charset="UTF-8">
+	<style type="text/css">
+		body {
+			background-color: #c8bfe7;
+			font-family: 'Times New Roman', Times, serif;
+			color: #000000;
+			margin: 0;
+			padding: 0;
+		}
+		input[type="submit"] {
+ 			background-color: #897cb7;
+			color: white;
+			font-size: 20px;
+		}
+		h2 {
+			background-color:#d8d2ed;
+			font-size: 40px;
+		}
+	</style>
+</head>
+<body>
+	<h2>Welcome, {{ .Login }}</h2>
+	<img src="images/g39hve0cjq2gh9m8f.png" width="500" />
+    <br><br>
+    <h2>My blogs:</h2>
+    {{ if .CntExists }}
+		{{ range .Cnts }}
+			{{ if .TextIsLit }}
+				<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Cnt }}</h3>
+			{{ else }}
+				<h3 style="font-size: 25px;">{{ .Cnt }}</h3>
+				<form action="/mypage/removeapost" method="post">
+					<input type="hidden" name="login" value="{{ .Login }}">
+					<input type="hidden" name="index" value="{{ .Index }}">
+					<input type="submit" value="Remove">
+					<br>
+				</form>
+			{{ end }}
+			{{ if .InsertImage }}
+				<img src="images/g84379fjeew0g98h4.png" width="50" />
+			{{ end }}
+		{{ end }}
+	{{ end }}
+    <br><br>
+    <h2>Write a blog</h2>
+	<form action="/mypage/newblog" method="post">
+    	<textarea name="message" rows="10" required></textarea>
+    	<input type="hidden" name="login" value="{{ .Login }}"><br>
+		<input type="submit" value="New blog">
+		<br>
+	</form>
+	<br><br><br><br>
+	<h2>Wanna delete all the posts?</h2>
+	<form action="/mypage/removeposts" method="post">
+		<input type="hidden" name="login" value="{{ .Login }}">
+		<input type="submit" value="Delete">
+		<br>
+	</form>
+	<br><br>
+</body>
+</html>
