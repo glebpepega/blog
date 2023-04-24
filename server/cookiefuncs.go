@@ -33,8 +33,7 @@ func terminateSessionIDCookieIfExists(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 }
 
-func generateSessionID() string {
-	sessionID := ""
+func generateSessionID() (sessionID string) {
 	for i := 0; i < 10; i++ {
 		sessionID += strconv.Itoa(rand.Intn(10))
 	}

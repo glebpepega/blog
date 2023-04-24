@@ -39,14 +39,6 @@ type Cnt struct {
 	Text        string
 }
 
-func newIndexHTML() *IndexHTML {
-	return &IndexHTML{}
-}
-
-func newBlogHTML() *BlogHTML {
-	return &BlogHTML{}
-}
-
 func (s *server) root(w http.ResponseWriter, r *http.Request) {
 	iHTML := newIndexHTML()
 	switch r.Method {

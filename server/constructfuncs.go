@@ -8,6 +8,14 @@ import (
 	"strings"
 )
 
+func newIndexHTML() *IndexHTML {
+	return &IndexHTML{}
+}
+
+func newBlogHTML() *BlogHTML {
+	return &BlogHTML{}
+}
+
 func constructHTML(filename string, w io.Writer, data any) error {
 	tmpl, err := template.ParseFiles(filename)
 	if err != nil {
