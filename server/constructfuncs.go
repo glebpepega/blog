@@ -8,6 +8,38 @@ import (
 	"strings"
 )
 
+type IndexHTML struct {
+	Supn          SignUpNotification
+	Sinn          SignInNotification
+	SessionExists bool
+	Login         string
+}
+
+type SignUpNotification struct {
+	SupNExists bool
+	SupNText   string
+}
+
+type SignInNotification struct {
+	SinNExists bool
+	SinNText   string
+}
+
+type BlogHTML struct {
+	Cnts      []Cnt
+	CntExists bool
+	CntString string
+	Login     string
+}
+
+type Cnt struct {
+	Login       string
+	Index       int
+	TextIsLit   bool
+	InsertImage bool
+	Text        string
+}
+
 func newIndexHTML() *IndexHTML {
 	return &IndexHTML{}
 }
