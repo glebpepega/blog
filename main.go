@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/glebpepega/blog/s"
+	"github.com/glebpepega/blog/server"
 )
 
 func main() {
-	s := s.New()
+	s := server.New()
 	s.Start()
 }

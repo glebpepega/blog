@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"fmt"
@@ -7,11 +7,10 @@ import (
 )
 
 type user struct {
-	login, password, content string
-}
-
-func newUser() *user {
-	return &user{}
+	login     string
+	password  string
+	content   string
+	sessionID string
 }
 
 func (s *DB) RegisterUser(login, password string) error {
@@ -25,10 +24,9 @@ func (s *DB) RegisterUser(login, password string) error {
 	return nil
 }
 
-func (s *DB) SearchUser(login, password string) (string, error) {
-	u := newUser()
-	row := s.db.QueryRow("SELECT * FROM users WHERE login=$1", login)
-	if err := row.Scan(&u.login, &u.password, &u.content); err != nil {
+func (s *DB) SearchUser(login, password string) (content string, err error) {
+	u := user{}
+	if err := s.db.QueryRow("SELECT login, password, content FROM users WHERE login=$1", login).Scan(&u.login, &u.password, &u.content); err != nil {
 		return "", fmt.Errorf("no such user")
 	}
 	if password != u.password {
@@ -37,28 +35,21 @@ func (s *DB) SearchUser(login, password string) (string, error) {
 	return u.content, nil
 }
 
-func (s *DB) NewBlog(login, newcnt string) (string, error) {
-	updatedContent := ""
+func (s *DB) NewBlog(login, newcnt string) (updatedContent string, err error) {
 	if err := s.db.QueryRow("SELECT content from users WHERE login=$1", login).Scan(&updatedContent); err != nil {
 		return updatedContent, err
 	}
 	errContent := updatedContent
 	updatedContent += time.Now().Format(login+" posted ~~ 15:04:05 ~~ 02.01.2006 ~~") + "\n" + newcnt + "\n"
-	_, err := s.db.Exec("UPDATE users SET content=$1 WHERE login=$2", updatedContent, login)
+	_, err = s.db.Exec("UPDATE users SET content=$1 WHERE login=$2", updatedContent, login)
 	if err != nil {
 		return errContent, err
 	}
 	return updatedContent, nil
 }
 
-func (s *DB) RemovePosts(login string) error {
-	_, err := s.db.Exec("UPDATE users SET content='' WHERE login=$1", login)
-	return err
-}
-
-func (s *DB) RemoveAPost(index int, login string) (string, error) {
+func (s *DB) RemoveAPost(login string, index int) (allNewCnt string, err error) {
 	allPrevCnt := ""
-	allNewCnt := ""
 	if err := s.db.QueryRow("SELECT content from users WHERE login=$1", login).Scan(&allPrevCnt); err != nil {
 		return allPrevCnt, err
 	}
@@ -71,9 +62,30 @@ func (s *DB) RemoveAPost(index int, login string) (string, error) {
 			allNewCnt += v + "\n"
 		}
 	}
-	_, err := s.db.Exec("UPDATE users SET content=$1 WHERE login=$2 RETURNING content", allNewCnt, login)
+	_, err = s.db.Exec("UPDATE users SET content=$1 WHERE login=$2 RETURNING content", allNewCnt, login)
 	if err != nil {
 		return allPrevCnt, err
 	}
 	return allNewCnt, nil
+}
+
+func (s *DB) RemovePosts(login string) error {
+	_, err := s.db.Exec("UPDATE users SET content='' WHERE login=$1", login)
+	return err
+}
+
+func (s *DB) SearchSession(sessionID string) (login string, content string, err error) {
+	u := user{}
+	if err := s.db.QueryRow("SELECT login, content, sessionid from users WHERE sessionid=$1", sessionID).Scan(&u.login, &u.content, &u.sessionID); err != nil {
+		return "", "", err
+	}
+	return u.login, u.content, nil
+}
+
+func (s *DB) AddSession(login, sessionID string) error {
+	_, err := s.db.Exec("UPDATE users SET sessionid=$1 WHERE login=$2", sessionID, login)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -25,38 +25,71 @@
  			background-color: #d8d2ed;
 			font-size: 40px;
 		}
+		p{
+ 			background-color: #d8d2ed;
+			font-size: 20px;
+		}
 	</style>
 </head>
 <body>
 	<h2>This is Pepega Blog Website</h2>
 	<img src="images/g39hve0cjq2gh9m8f.png" width="500" style="vertical-align:middle" />
 	<br><br><br>
-	<h2>Log in</h2>
-    <form action="/mypage" method="post">
-      	<label for="username">Username:</label>
-    	<input type="text" name="login" required><br>
+	{{ if .SessionExists }}
+		<form action="/mypage" method="get">
+			<input type="submit" value="{{ .Login }}'s page">
+		</form>
+		<br>
+		<form action="/logout" method="get">
+			<input type="submit" value="Log out">
+		</form>
+	{{ else }}
+		<h2>Log in</h2>
+		<form action="/mypage" method="post">
+			<label for="username">Username:</label>
+			<input type="text" name="login" required><br>
 
-    	<label for="password">Password:</label>
-    	<input type="password" name="password" required><br>
+			<label for="password">Password:</label>
+			<input type="password" name="password" required><br>
 
-    	<input type="submit" value="Sign in">
-		{{ if .Sinn.SinNExists }}
-			{{ .Sinn.SinNText }}
-		{{ end }}
-    </form>
-	<h2>Sign Up</h2>
-    <form action="/" method="post">
-    	<label for="username">Username:</label>
-    	<input type="text" name="login" required><br>
+			<input type="submit" value="Sign in">
+			{{ if .Sinn.SinNExists }}
+				{{ .Sinn.SinNText }}
+			{{ end }}
+		</form>
+		<h2>Sign Up</h2>
+		<form action="/" method="post">
+			<label for="username">Username:</label>
+			<input type="text" name="login" required><br>
 
-    	<label for="password">Password:</label>
-    	<input type="password" name="password" required><br>
+			<label for="password">Password:</label>
+			<input type="password" name="password" required><br>
 
-    	<input type="submit" value="Sign Up">
-		{{ if .Supn.SupNExists }}
-			{{ .Supn.SupNText }}
-		{{ end }}
-    </form>
+			<input type="submit" value="Sign Up">
+			{{ if .Supn.SupNExists }}
+				{{ .Supn.SupNText }}
+			{{ end }}
+		</form>
+	{{ end }}
 	<br><br>
+	<p>Pepega<br>
+		The politically correct way of saying retarded.<br>
+		John: Wow, what a retard.<br>
+		Arnold: Dude you can't say that<br>
+		John: Sorry, I mean "pepega."<br>
+		by pepega2 March 27, 2019<br></p>
+	<p>Pepega<br>
+		(pronounced "peh-peyguh") is a Twitch Emote featuring a distorted image of Pepe the Frog which is used to ironically express that something is stupid and is commonly accompanied by the slang pejorative "retard" and the words "FOR SAN" in reference to the Twitch streamer Forsen. Online, the emote is frequently posted in Twitch chats and the /r/forsen subreddit.<br>
+		FORSAAAAAN Pepega :mega:<br>
+		by Dumpster kid January 10, 2019<br></p>
+	<p>Pepega<br>
+		BetterTTV emote mostly used when the streamer says something retarded or doesn’t understand something. Can be understood as a twitch slang for retarded.<br>
+		Forsen: (Doesn’t understand something)<br>
+		Chat: (Spams Pepega )<br>
+		<br>
+		XQC: (sees aligator) (...) when they catch the tiger (...)<br>
+		Chat: Pepega<br>
+		by Zodiac’s Son February 26, 2019<br></p>
+		<br>
 </body>
 </html>

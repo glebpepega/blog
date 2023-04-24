@@ -23,6 +23,14 @@
 	</style>
 </head>
 <body>
+	<br>
+	<form action="/" method="get">
+		<input type="submit" value="Home">
+	</form>
+	<br>
+	<form action="/logout" method="get">
+		<input type="submit" value="Log out">
+	</form>
 	<h2>Welcome, {{ .Login }}</h2>
 	<img src="images/g39hve0cjq2gh9m8f.png" width="500" />
     <br><br>
@@ -30,11 +38,10 @@
     {{ if .CntExists }}
 		{{ range .Cnts }}
 			{{ if .TextIsLit }}
-				<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Cnt }}</h3>
+				<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Text }}</h3>
 			{{ else }}
-				<h3 style="font-size: 25px;">{{ .Cnt }}</h3>
+				<h3 style="font-size: 25px;">{{ .Text }}</h3>
 				<form action="/mypage/removeapost" method="post">
-					<input type="hidden" name="login" value="{{ .Login }}">
 					<input type="hidden" name="index" value="{{ .Index }}">
 					<input type="submit" value="Remove">
 					<br>
@@ -49,16 +56,14 @@
     <h2>Write a blog</h2>
 	<form action="/mypage/newblog" method="post">
     	<textarea name="message" rows="10" required></textarea>
-    	<input type="hidden" name="login" value="{{ .Login }}"><br>
+		<br>
 		<input type="submit" value="New blog">
 		<br>
 	</form>
 	<br><br><br><br>
 	<h2>Wanna delete all the posts?</h2>
-	<form action="/mypage/removeposts" method="post">
-		<input type="hidden" name="login" value="{{ .Login }}">
+	<form action="/mypage/removeposts" method="get">
 		<input type="submit" value="Delete">
-		<br>
 	</form>
 	<br><br>
 </body>
