@@ -117,7 +117,7 @@ func (s *server) myPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	case "POST":
-		cnt1, err := s.db.SearchUser(r.FormValue("login"), r.FormValue("password"))
+		cnt, err := s.db.SearchUser(r.FormValue("login"), r.FormValue("password"))
 		if err != nil {
 			iHTML.Sinn.SinNExists = true
 			iHTML.Sinn.SinNText = err.Error()
@@ -125,14 +125,14 @@ func (s *server) myPage(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 			}
 		} else {
-			login, cnt2, exists := validCookieExists(s, r)
+			login, cnt_, exists := validCookieExists(s, r)
 			if exists {
 				bHtml.Login = login
-				bHtml.CntString = cnt2
+				bHtml.CntString = cnt_
 				constructBlog(bHtml, s, w, r)
 			} else {
 				bHtml.Login = r.FormValue("login")
-				bHtml.CntString = cnt1
+				bHtml.CntString = cnt
 				newSessionLogIn(bHtml, s, w, r)
 			}
 		}
