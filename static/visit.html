@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pepega Blog Website</title>
+	<meta charset="UTF-8">
+	<style type="text/css">
+		body {
+			background-color: #c8bfe7;
+			font-family: 'Times New Roman', Times, serif;
+			color: #000000;
+			margin: 0;
+			padding: 0;
+		}
+		input {
+ 			background-color: #bdb2e6;
+			color: #000000;
+			font-size: 20px;
+		}
+		h2 {
+			background-color:#d8d2ed;
+			font-size: 40px;
+		}
+	</style>
+</head>
+<body>
+	<br>
+	<form action="/" method="get">
+		<input type="submit" value="Home">
+	</form>
+	<br>
+    <form action="/mypage" method="get">
+		<input type="submit" value="My page">
+	</form>
+	<br>
+	<form action="/logout" method="get">
+		<input type="submit" value="Log out">
+	</form>
+	<img src="images/g39hve0cjq2gh9m8f.png" width="500" />
+    <br><br>
+	<h3>page created on {{ .CreatedOn }}</h3>
+	<br><br>
+    <h2>{{ .Login }}'s blogs:</h2>
+    {{ if .CntsExist }}
+		{{ range .Contents }}
+			<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Author }} posted on {{ .PostedOn }}</h3>
+			<h3>{{ .Text }}</h3>
+			{{ range .Images }}
+				<img src="{{ .Link }}" width="400" />
+			{{ end }}
+			<br>
+			<img src="images/g84379fjeew0g98h4.png" width="50" />
+		{{ end }}
+	{{ end }}
+	<br><br><br><br>
+	{{ if .AlreadyAddedToFavPage }}
+		<form action="/visit/removefromfavs" method="post">
+			<input type="hidden" name="visitlogin" value="{{ .Login }}">
+			<input type="submit" value="Remove page from favourites">
+		</form>
+	{{ else }}
+		<form action="/visit/addtofavs" method="post">
+			<input type="hidden" name="visitlogin" value="{{ .Login }}">
+			<input type="submit" value="Add page to favourites">
+		</form>
+	{{ end }}
+    <br><br>
+</body>
+</html>

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="icon" href="data:,">
 	<title>Pepega Blog Website</title>
 	<meta charset="UTF-8">
 	<style type="text/css">
@@ -12,9 +11,9 @@
 			margin: 0;
 			padding: 0;
 		}
-		input[type="submit"] {
- 			background-color: #897cb7;
-			color: white;
+		input {
+ 			background-color: #bdb2e6;
+			color: #000000;
 			font-size: 20px;
 		}
 		h2 {
@@ -29,16 +28,31 @@
 		<input type="submit" value="Home">
 	</form>
 	<br>
+	<form action="/visit" method="get">
+		<input type="text" placeholder="username to visit" name="visitlogin" required><br><br>
+		<input type="submit" value="Visit">
+	</form>
+	<br>
 	<form action="/logout" method="get">
 		<input type="submit" value="Log out">
 	</form>
 	<h2>Welcome, {{ .Login }}</h2>
+	<h3>page created on {{ .CreatedOn }}</h3>
 	<img src="images/g39hve0cjq2gh9m8f.png" width="500" />
-    <br><br>
+	{{ if .FavPsExist }}
+	<br><br>
+	<h2>Favourite pages:</h2>
+		{{ range .FavouritePages }}
+			<form action="/visit" method="get">
+				<input name="visitlogin" type="submit" value="{{ .Username }}">
+			</form>
+		{{ end }}
+	{{ end }}
+	<br><br>
     <h2>My blogs:</h2>
     {{ if .CntsExist }}
 		{{ range .Contents }}
-			<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Author }} posted on {{ .Timestamp }}</h3>
+			<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Author }} posted on {{ .PostedOn }}</h3>
 			<h3>{{ .Text }}</h3>
 			{{ range .Images }}
 				<img src="{{ .Link }}" width="400" />
@@ -66,7 +80,7 @@
 	<br><br><br><br>
 	<h2>Wanna delete all the posts?</h2>
 	<form action="/mypage/removeposts" method="get">
-		<input type="password" placeholder="enter oassword to confirm" name="password" required><br><br>
+		<input type="password" placeholder="enter password to confirm" name="password" required><br><br>
 		<input type="submit" value="Delete">
 		{{ if .Dapn.DAPNExists }}
 			{{ .Dapn.DAPNText }}

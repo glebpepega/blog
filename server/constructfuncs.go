@@ -25,18 +25,26 @@ type SignInNotification struct {
 }
 
 type BlogHTML struct {
-	Contents  []*Post
-	CntsExist bool
-	Login     string
-	Dapn      DeleteAllPostsNotification
+	AlreadyAddedToFavPage bool
+	Login                 string
+	CreatedOn             string
+	FavouritePages        []FavPage
+	FavPsExist            bool
+	Contents              []Post
+	CntsExist             bool
+	Dapn                  DeleteAllPostsNotification
+}
+
+type FavPage struct {
+	Username string
 }
 
 type Post struct {
-	ID        string
-	Author    string
-	Timestamp string
-	Text      string
-	Images    []Image
+	ID       string
+	Author   string
+	PostedOn string
+	Text     string
+	Images   []Image
 }
 
 type Image struct {
@@ -67,12 +75,15 @@ func constructHTML(filename string, w io.Writer, data any) error {
 	return nil
 }
 
-func constructBlog(data any, s *server, w http.ResponseWriter, r *http.Request) {
+func constructBlog(filename string, data any, s *server, w http.ResponseWriter, r *http.Request) {
 	bHTML := data.(*BlogHTML)
+	if len(bHTML.FavouritePages) > 0 {
+		bHTML.FavPsExist = true
+	}
 	if len(bHTML.Contents) > 0 {
 		bHTML.CntsExist = true
 	}
-	if err := constructHTML("static/blog.html", w, bHTML); err != nil {
+	if err := constructHTML(filename, w, bHTML); err != nil {
 		log.Println(err)
 	}
 }

@@ -46,8 +46,8 @@ func (s *server) root(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) logOut(w http.ResponseWriter, r *http.Request) {
-	iHTML := newIndexHTML()
 	terminateSessionIDCookieIfExists(w, r)
+	iHTML := newIndexHTML()
 	if err = constructHTML("static/index.html", w, iHTML); err != nil {
 		log.Println(err)
 	}
@@ -64,11 +64,15 @@ func (s *server) myPage(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		sID, exists := validSessionExists(s, r)
 		if exists {
-			bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+			u, err := s.db.getBlogContents(sID)
 			if err != nil {
 				log.Println(err)
 			}
-			constructBlog(bHTML, s, w, r)
+			bHTML.Login = u.Login
+			bHTML.CreatedOn = u.CreatedOn
+			bHTML.FavouritePages = u.FavouritePages
+			bHTML.Contents = u.Blog
+			constructBlog("static/blog.html", bHTML, s, w, r)
 		} else {
 			terminateSessionIDCookieIfExists(w, r)
 			if err = constructHTML("static/index.html", w, iHTML); err != nil {
@@ -88,11 +92,15 @@ func (s *server) myPage(w http.ResponseWriter, r *http.Request) {
 			if err = s.db.addSession(r.FormValue("login"), newSessionID); err != nil {
 				log.Println(err)
 			}
-			bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(newSessionID)
+			u, err := s.db.getBlogContents(newSessionID)
 			if err != nil {
 				log.Println(err)
 			}
-			constructBlog(bHTML, s, w, r)
+			bHTML.Login = u.Login
+			bHTML.CreatedOn = u.CreatedOn
+			bHTML.FavouritePages = u.FavouritePages
+			bHTML.Contents = u.Blog
+			constructBlog("static/blog.html", bHTML, s, w, r)
 		}
 	}
 }
@@ -104,12 +112,16 @@ func (s *server) newBlog(w http.ResponseWriter, r *http.Request) {
 		if err := s.db.addNewPost(imageLinks, r.FormValue("message"), sID); err != nil {
 			log.Println(err)
 		}
-		bHTML := newBlogHTML()
-		bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+		u, err := s.db.getBlogContents(sID)
 		if err != nil {
 			log.Println(err)
 		}
-		constructBlog(bHTML, s, w, r)
+		bHTML := newBlogHTML()
+		bHTML.Login = u.Login
+		bHTML.CreatedOn = u.CreatedOn
+		bHTML.FavouritePages = u.FavouritePages
+		bHTML.Contents = u.Blog
+		constructBlog("static/blog.html", bHTML, s, w, r)
 	} else {
 		terminateSessionIDCookieIfExists(w, r)
 		iHTML := newIndexHTML()
@@ -125,15 +137,19 @@ func (s *server) removeAPost(w http.ResponseWriter, r *http.Request) {
 		if err = s.db.removeAPost(r.FormValue("postid")); err != nil {
 			log.Println(err)
 		}
-		bHTML := newBlogHTML()
-		bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+		u, err := s.db.getBlogContents(sID)
 		if err != nil {
 			log.Println(err)
 		}
-		constructBlog(bHTML, s, w, r)
+		bHTML := newBlogHTML()
+		bHTML.Login = u.Login
+		bHTML.CreatedOn = u.CreatedOn
+		bHTML.FavouritePages = u.FavouritePages
+		bHTML.Contents = u.Blog
+		constructBlog("static/blog.html", bHTML, s, w, r)
 	} else {
-		iHTML := newIndexHTML()
 		terminateSessionIDCookieIfExists(w, r)
+		iHTML := newIndexHTML()
 		if err = constructHTML("static/index.html", w, iHTML); err != nil {
 			log.Println(err)
 		}
@@ -158,11 +174,103 @@ func (s *server) removePosts(w http.ResponseWriter, r *http.Request) {
 			bHTML.Dapn.DAPNExists = true
 			bHTML.Dapn.DAPNText = "posts deleted"
 		}
-		bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+		u, err := s.db.getBlogContents(sID)
 		if err != nil {
 			log.Println(err)
 		}
-		constructBlog(bHTML, s, w, r)
+		bHTML.Login = u.Login
+		bHTML.CreatedOn = u.CreatedOn
+		bHTML.FavouritePages = u.FavouritePages
+		bHTML.Contents = u.Blog
+		constructBlog("static/blog.html", bHTML, s, w, r)
+	} else {
+		terminateSessionIDCookieIfExists(w, r)
+		iHTML := newIndexHTML()
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func (s *server) visit(w http.ResponseWriter, r *http.Request) {
+	sID, exists := validSessionExists(s, r)
+	if exists {
+		bHTML := newBlogHTML()
+		bHTML.Login = r.FormValue("visitlogin")
+		if err = s.db.searchUser(bHTML.Login, ""); err.Error() != "no such user" {
+			if err = s.db.isPageInFavourites(bHTML.Login, sID); err == nil {
+				bHTML.AlreadyAddedToFavPage = true
+			}
+			u, err := s.db.getVisitContents(bHTML.Login)
+			if err != nil {
+				log.Println(err)
+			}
+			bHTML.CreatedOn = u.CreatedOn
+			bHTML.Contents = u.Blog
+			constructBlog("static/visit.html", bHTML, s, w, r)
+		} else {
+			u, err := s.db.getBlogContents(sID)
+			if err != nil {
+				log.Println(err)
+			}
+			bHTML.Login = u.Login
+			bHTML.CreatedOn = u.CreatedOn
+			bHTML.FavouritePages = u.FavouritePages
+			bHTML.Contents = u.Blog
+			constructBlog("static/blog.html", bHTML, s, w, r)
+		}
+	} else {
+		terminateSessionIDCookieIfExists(w, r)
+		iHTML := newIndexHTML()
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func (s *server) addToFavs(w http.ResponseWriter, r *http.Request) {
+	sID, exists := validSessionExists(s, r)
+	if exists {
+		bHTML := newBlogHTML()
+		bHTML.Login = r.FormValue("visitlogin")
+		if err = s.db.addPageToFavourites(bHTML.Login, sID); err != nil {
+			log.Println(err)
+		} else {
+			bHTML.AlreadyAddedToFavPage = true
+		}
+		u, err := s.db.getVisitContents(bHTML.Login)
+		if err != nil {
+			log.Println(err)
+		}
+		bHTML.CreatedOn = u.CreatedOn
+		bHTML.Contents = u.Blog
+		constructBlog("static/visit.html", bHTML, s, w, r)
+	} else {
+		terminateSessionIDCookieIfExists(w, r)
+		iHTML := newIndexHTML()
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func (s *server) removeFromFavs(w http.ResponseWriter, r *http.Request) {
+	sID, exists := validSessionExists(s, r)
+	if exists {
+		bHTML := newBlogHTML()
+		bHTML.Login = r.FormValue("visitlogin")
+		if err = s.db.removePageFromFavourites(bHTML.Login, sID); err != nil {
+			log.Println(err)
+		} else {
+			bHTML.AlreadyAddedToFavPage = false
+		}
+		u, err := s.db.getVisitContents(bHTML.Login)
+		if err != nil {
+			log.Println(err)
+		}
+		bHTML.CreatedOn = u.CreatedOn
+		bHTML.Contents = u.Blog
+		constructBlog("static/visit.html", bHTML, s, w, r)
 	} else {
 		terminateSessionIDCookieIfExists(w, r)
 		iHTML := newIndexHTML()
