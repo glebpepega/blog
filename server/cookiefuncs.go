@@ -3,7 +3,6 @@ package server
 import (
 	"math/rand"
 	"net/http"
-	"strconv"
 )
 
 func setSessionIDCookie(newSessionID string, w http.ResponseWriter, r *http.Request) {
@@ -15,13 +14,16 @@ func setSessionIDCookie(newSessionID string, w http.ResponseWriter, r *http.Requ
 	http.SetCookie(w, sessionID)
 }
 
-func validCookieExists(s *server, r *http.Request) (login string, content string, status bool) {
+func validSessionExists(s *server, r *http.Request) (sessionID string, status bool) {
 	cookie, err := r.Cookie("SESSIONID")
 	if err != nil {
-		return "", "", false
+		return "", false
 	} else {
-		login, cnt, err := s.db.SearchSession(cookie.Value)
-		return login, cnt, err == nil
+		if err := s.db.searchSession(cookie.Value); err != nil {
+			return "", false
+		} else {
+			return cookie.Value, true
+		}
 	}
 }
 
@@ -34,8 +36,9 @@ func terminateSessionIDCookieIfExists(w http.ResponseWriter, r *http.Request) {
 }
 
 func generateSessionID() (sessionID string) {
+	chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	for i := 0; i < 10; i++ {
-		sessionID += strconv.Itoa(rand.Intn(10))
+		sessionID += string(chars[rand.Intn(62)])
 	}
 	return sessionID
 }

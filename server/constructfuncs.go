@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 )
 
 type IndexHTML struct {
@@ -26,18 +25,27 @@ type SignInNotification struct {
 }
 
 type BlogHTML struct {
-	Cnts      []Cnt
-	CntExists bool
-	CntString string
+	Contents  []*Post
+	CntsExist bool
 	Login     string
+	Dapn      DeleteAllPostsNotification
 }
 
-type Cnt struct {
-	Login       string
-	Index       int
-	TextIsLit   bool
-	InsertImage bool
-	Text        string
+type Post struct {
+	ID        string
+	Author    string
+	Timestamp string
+	Text      string
+	Images    []Image
+}
+
+type Image struct {
+	Link string
+}
+
+type DeleteAllPostsNotification struct {
+	DAPNExists bool
+	DAPNText   string
 }
 
 func newIndexHTML() *IndexHTML {
@@ -61,34 +69,10 @@ func constructHTML(filename string, w io.Writer, data any) error {
 
 func constructBlog(data any, s *server, w http.ResponseWriter, r *http.Request) {
 	bHTML := data.(*BlogHTML)
-	if bHTML.CntString != "" {
-		bHTML.CntExists = true
-		csnSlice := strings.Split(bHTML.CntString, "\n")
-		for i, v := range csnSlice {
-			cnt := Cnt{}
-			cnt.Text = v
-			cnt.Login = bHTML.Login
-			cnt.Index = i
-			if i%2 == 0 {
-				cnt.TextIsLit = true
-			}
-			if i%2 == 1 {
-				cnt.InsertImage = true
-			}
-			bHTML.Cnts = append(bHTML.Cnts, cnt)
-			cnt.TextIsLit = false
-			cnt.InsertImage = false
-		}
+	if len(bHTML.Contents) > 0 {
+		bHTML.CntsExist = true
 	}
 	if err := constructHTML("static/blog.html", w, bHTML); err != nil {
 		log.Println(err)
 	}
-}
-
-func newSessionLogIn(data any, s *server, w http.ResponseWriter, r *http.Request) {
-	newSessionID := generateSessionID()
-	setSessionIDCookie(newSessionID, w, r)
-	s.db.AddSession(r.FormValue("login"), newSessionID)
-	bHTML := data.(*BlogHTML)
-	constructBlog(bHTML, s, w, r)
 }

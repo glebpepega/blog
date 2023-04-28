@@ -1,4 +1,4 @@
-package database
+package server
 
 import (
 	"database/sql"
@@ -18,10 +18,10 @@ func NewDB() *DB {
 func (s *DB) Start() {
 	db, err := sql.Open("postgres", "host=localhost port=5432 user=postgres password=1510 dbname=blog sslmode=disable")
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 	if err := db.Ping(); err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 	s.db = db
 }

@@ -3,25 +3,23 @@ package server
 import (
 	"log"
 	"net/http"
-
-	"github.com/glebpepega/blog/database"
 )
 
 type server struct {
-	db *database.DB
+	db *DB
 	r  *http.ServeMux
 }
 
 func New() *server {
 	return &server{
-		db: database.NewDB(),
+		db: NewDB(),
 		r:  http.NewServeMux(),
 	}
 }
 
 func (s *server) Start() {
 	s.db.Start()
-	s.r.Handle("/", http.HandlerFunc(s.root))
+	s.r.HandleFunc("/", s.root)
 	s.r.HandleFunc("/logout", s.logOut)
 	s.r.Handle("/images/", http.StripPrefix("/images", s.fileServer()))
 	s.r.Handle("/mypage/images/", http.StripPrefix("/mypage/images", s.fileServer()))

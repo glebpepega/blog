@@ -3,7 +3,6 @@ package server
 import (
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -11,39 +10,37 @@ func (s *server) root(w http.ResponseWriter, r *http.Request) {
 	iHTML := newIndexHTML()
 	switch r.Method {
 	case "GET":
-		login, _, exists := validCookieExists(s, r)
+		sID, exists := validSessionExists(s, r)
 		if exists {
+			login, err := s.db.getHomePageContents(sID)
+			if err != nil {
+				log.Println(err)
+			}
 			iHTML.SessionExists = true
 			iHTML.Login = login
 		} else {
 			terminateSessionIDCookieIfExists(w, r)
 		}
-		if err := constructHTML("static/index.html", w, iHTML); err != nil {
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
 			log.Println(err)
 		}
 	case "POST":
 		if len(r.FormValue("password")) < 6 {
 			iHTML.Supn.SupNExists = true
 			iHTML.Supn.SupNText = "password must be at least 6 characters long"
-			if err := constructHTML("static/index.html", w, iHTML); err != nil {
-				log.Println(err)
-			}
-		} else if err := s.db.RegisterUser(r.FormValue("login"), r.FormValue("password")); err != nil {
+		} else if err = s.db.registerUser(r.FormValue("login"), r.FormValue("password")); err != nil {
 			iHTML.Supn.SupNExists = true
 			if err.Error() == "user already exists" {
 				iHTML.Supn.SupNText = err.Error()
 			} else {
 				iHTML.Supn.SupNText = "username or password must be less than 50 characters long"
 			}
-			if err := constructHTML("static/index.html", w, iHTML); err != nil {
-				log.Println(err)
-			}
 		} else {
 			iHTML.Supn.SupNExists = true
 			iHTML.Supn.SupNText = "account created!"
-			if err := constructHTML("static/index.html", w, iHTML); err != nil {
-				log.Println(err)
-			}
+		}
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
+			log.Println(err)
 		}
 	}
 }
@@ -51,7 +48,7 @@ func (s *server) root(w http.ResponseWriter, r *http.Request) {
 func (s *server) logOut(w http.ResponseWriter, r *http.Request) {
 	iHTML := newIndexHTML()
 	terminateSessionIDCookieIfExists(w, r)
-	if err := constructHTML("static/index.html", w, iHTML); err != nil {
+	if err = constructHTML("static/index.html", w, iHTML); err != nil {
 		log.Println(err)
 	}
 }
@@ -62,106 +59,114 @@ func (s *server) fileServer() http.Handler {
 
 func (s *server) myPage(w http.ResponseWriter, r *http.Request) {
 	iHTML := newIndexHTML()
-	bHtml := newBlogHTML()
+	bHTML := newBlogHTML()
 	switch r.Method {
 	case "GET":
-		login, cnt, exists := validCookieExists(s, r)
+		sID, exists := validSessionExists(s, r)
 		if exists {
-			bHtml.Login = login
-			bHtml.CntString = cnt
-			constructBlog(bHtml, s, w, r)
+			bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+			if err != nil {
+				log.Println(err)
+			}
+			constructBlog(bHTML, s, w, r)
 		} else {
 			terminateSessionIDCookieIfExists(w, r)
-			if err := constructHTML("static/index.html", w, iHTML); err != nil {
+			if err = constructHTML("static/index.html", w, iHTML); err != nil {
 				log.Println(err)
 			}
 		}
 	case "POST":
-		cnt, err := s.db.SearchUser(r.FormValue("login"), r.FormValue("password"))
-		if err != nil {
+		if err = s.db.searchUser(r.FormValue("login"), r.FormValue("password")); err != nil {
 			iHTML.Sinn.SinNExists = true
 			iHTML.Sinn.SinNText = err.Error()
-			if err := constructHTML("static/index.html", w, iHTML); err != nil {
+			if err = constructHTML("static/index.html", w, iHTML); err != nil {
 				log.Println(err)
 			}
 		} else {
-			login, cnt_, exists := validCookieExists(s, r)
-			if exists {
-				bHtml.Login = login
-				bHtml.CntString = cnt_
-				constructBlog(bHtml, s, w, r)
-			} else {
-				bHtml.Login = r.FormValue("login")
-				bHtml.CntString = cnt
-				newSessionLogIn(bHtml, s, w, r)
+			newSessionID := generateSessionID()
+			setSessionIDCookie(newSessionID, w, r)
+			if err = s.db.addSession(r.FormValue("login"), newSessionID); err != nil {
+				log.Println(err)
 			}
+			bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(newSessionID)
+			if err != nil {
+				log.Println(err)
+			}
+			constructBlog(bHTML, s, w, r)
 		}
 	}
 }
 
 func (s *server) newBlog(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-	login, _, exists := validCookieExists(s, r)
+	sID, exists := validSessionExists(s, r)
 	if exists {
-		message := strings.ReplaceAll(r.FormValue("message"), "\n", " ")
-		cnt, err := s.db.NewBlog(login, message)
-		if err != nil {
+		imageLinks := strings.Split(r.FormValue("images"), "\n")
+		if err := s.db.addNewPost(imageLinks, r.FormValue("message"), sID); err != nil {
 			log.Println(err)
 		}
 		bHTML := newBlogHTML()
-		bHTML.Login = login
-		bHTML.CntString = cnt
+		bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+		if err != nil {
+			log.Println(err)
+		}
 		constructBlog(bHTML, s, w, r)
 	} else {
 		terminateSessionIDCookieIfExists(w, r)
 		iHTML := newIndexHTML()
-		if err := constructHTML("static/index.html", w, iHTML); err != nil {
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
 			log.Println(err)
 		}
 	}
 }
 
 func (s *server) removeAPost(w http.ResponseWriter, r *http.Request) {
-	login, _, exists := validCookieExists(s, r)
+	sID, exists := validSessionExists(s, r)
 	if exists {
-		index, err := strconv.Atoi(r.FormValue("index"))
-		if err != nil {
-			log.Println(err)
-		}
-		cnt, err := s.db.RemoveAPost(login, index)
-		if err != nil {
+		if err = s.db.removeAPost(r.FormValue("postid")); err != nil {
 			log.Println(err)
 		}
 		bHTML := newBlogHTML()
-		bHTML.Login = login
-		bHTML.CntString = cnt
+		bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+		if err != nil {
+			log.Println(err)
+		}
 		constructBlog(bHTML, s, w, r)
 	} else {
 		iHTML := newIndexHTML()
 		terminateSessionIDCookieIfExists(w, r)
-		if err := constructHTML("static/index.html", w, iHTML); err != nil {
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
 			log.Println(err)
 		}
 	}
 }
 
 func (s *server) removePosts(w http.ResponseWriter, r *http.Request) {
-	login, _, exists := validCookieExists(s, r)
+	sID, exists := validSessionExists(s, r)
 	if exists {
-		if err := s.db.RemovePosts(login); err != nil {
+		bHTML := newBlogHTML()
+		if len(r.FormValue("password")) < 6 {
+			bHTML.Dapn.DAPNExists = true
+			bHTML.Dapn.DAPNText = "password must be at least 6 characters long"
+		} else if err = s.db.removePosts(r.FormValue("password"), sID); err != nil {
+			if err.Error() == "wrong password" {
+				bHTML.Dapn.DAPNExists = true
+				bHTML.Dapn.DAPNText = err.Error()
+			} else {
+				log.Println(err)
+			}
+		} else {
+			bHTML.Dapn.DAPNExists = true
+			bHTML.Dapn.DAPNText = "posts deleted"
+		}
+		bHTML.Login, bHTML.Contents, err = s.db.getBlogContents(sID)
+		if err != nil {
 			log.Println(err)
 		}
-		bHTML := newBlogHTML()
-		bHTML.Login = login
-		bHTML.CntString = ""
 		constructBlog(bHTML, s, w, r)
 	} else {
 		terminateSessionIDCookieIfExists(w, r)
 		iHTML := newIndexHTML()
-		if err := constructHTML("static/index.html", w, iHTML); err != nil {
+		if err = constructHTML("static/index.html", w, iHTML); err != nil {
 			log.Println(err)
 		}
 	}

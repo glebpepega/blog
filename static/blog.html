@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="icon" href="data:,">
 	<title>Pepega Blog Website</title>
 	<meta charset="UTF-8">
 	<style type="text/css">
@@ -35,27 +36,29 @@
 	<img src="images/g39hve0cjq2gh9m8f.png" width="500" />
     <br><br>
     <h2>My blogs:</h2>
-    {{ if .CntExists }}
-		{{ range .Cnts }}
-			{{ if .TextIsLit }}
-				<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Text }}</h3>
-			{{ else }}
-				<h3 style="font-size: 25px;">{{ .Text }}</h3>
-				<form action="/mypage/removeapost" method="post">
-					<input type="hidden" name="index" value="{{ .Index }}">
-					<input type="submit" value="Remove">
-					<br>
-				</form>
+    {{ if .CntsExist }}
+		{{ range .Contents }}
+			<h3 style="background-color:#d8d2ed; font-size: 30px;">{{ .Author }} posted on {{ .Timestamp }}</h3>
+			<h3>{{ .Text }}</h3>
+			{{ range .Images }}
+				<img src="{{ .Link }}" width="400" />
 			{{ end }}
-			{{ if .InsertImage }}
-				<img src="images/g84379fjeew0g98h4.png" width="50" />
-			{{ end }}
+			<form action="/mypage/removeapost" method="post">
+				<input type="hidden" name="postid" value="{{ .ID }}">
+				<input type="submit" value="Remove">
+				<br>
+			</form>
+			<img src="images/g84379fjeew0g98h4.png" width="50" />
 		{{ end }}
 	{{ end }}
     <br><br>
     <h2>Write a blog</h2>
 	<form action="/mypage/newblog" method="post">
+		<h3>Text</h3>
     	<textarea name="message" rows="10" required></textarea>
+		<br>
+		<h3>Images:</h3>
+		<textarea name="images" placeholder="separate URLs by a single new line" rows="10"></textarea>
 		<br>
 		<input type="submit" value="New blog">
 		<br>
@@ -63,7 +66,11 @@
 	<br><br><br><br>
 	<h2>Wanna delete all the posts?</h2>
 	<form action="/mypage/removeposts" method="get">
+		<input type="password" placeholder="enter oassword to confirm" name="password" required><br><br>
 		<input type="submit" value="Delete">
+		{{ if .Dapn.DAPNExists }}
+			{{ .Dapn.DAPNText }}
+		{{ end }}
 	</form>
 	<br><br>
 </body>
